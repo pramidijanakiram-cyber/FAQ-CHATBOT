@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Index — Search Engine Architecture FAQ</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: '#FBF9F5',
+            sand: {
+              50: '#FDFBF7',
+              100: '#F4EFEA',
+              200: '#E7E1D6',
+              300: '#DDD4C7',
+              400: '#A89D91',
+              500: '#7C6E61',
+              600: '#635345',
+              700: '#4A3D33',
+              800: '#342A21',
+              900: '#2B221B'
+            },
+            chestnut: {
+              DEFAULT: '#7B5438',
+              hover: '#68452D',
+              light: '#EDE6DD'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom clean scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #DDD4C7; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #A89D91; }
+  </style>
+<script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
+<body class="bg-[#FBF9F5] text-[#2B221B] font-sans antialiased selection:bg-[#7B5438] selection:text-white min-h-screen flex flex-col items-center justify-between">
+
+  <!-- Main Container -->
+  <div class="w-full max-w-3xl flex-1 flex flex-col h-screen p-2 sm:p-4">
+
+    <!-- Header -->
+    <header class="bg-[#F4EFEA]/90 border border-[#E7E1D6] rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm mb-3 shrink-0 backdrop-blur-sm">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-[#342A21] flex items-center justify-center text-[#FBF9F5] shadow-xs">
+          <!-- Compass Icon -->
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <h1 class="font-semibold text-base text-[#2B221B] tracking-tight">Index</h1>
+          <!-- Info Button -->
+          <button id="infoBtn" class="w-5 h-5 rounded-full bg-[#EAE2D8] hover:bg-[#DDD2C4] text-[#5C4D41] hover:text-[#2B221B] flex items-center justify-center transition-colors text-xs font-serif italic font-bold border border-[#DDD3C5]" title="About Index">
+            i
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-1.5">
+        <button id="browseBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EDE6DD] hover:bg-[#E2D9CE] text-xs font-medium text-[#4A3D33] border border-[#DDD4C7] transition-colors">
+          <svg class="w-3.5 h-3.5 text-[#7B5438]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+          </svg>
+          <span id="browseCount">Browse (16)</span>
+        </button>
+
+        <button id="resetBtn" class="p-1.5 rounded-xl bg-[#EDE6DD] hover:bg-[#E2D9CE] text-[#635345] hover:text-[#2B221B] border border-[#DDD4C7] transition-colors" title="Reset conversation">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+            <path d="M21 3v5h-5"></path>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+            <path d="M8 16H3v5"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Chat Messages View -->
+    <div id="chatScroll" class="flex-1 bg-white/75 border border-[#E7E1D6] rounded-2xl p-4 overflow-y-auto space-y-4 shadow-xs">
+      <!-- Dynamic Messages rendered here -->
+    </div>
+
+    <!-- Quick Suggestions Carousel -->
+    <div class="py-2 overflow-x-auto flex items-center gap-1.5 shrink-0" id="quickPills">
+      <span class="text-[11px] text-[#7C6E61] shrink-0 flex items-center gap-1 pl-1">
+        <svg class="w-3 h-3 text-[#7B5438]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+        </svg>
+        Suggestions:
+      </span>
+      <!-- Pills inserted by JS -->
+    </div>
+
+    <!-- Input Form -->
+    <form id="chatForm" class="bg-white border border-[#E7E1D6] rounded-2xl p-2 flex items-center gap-2 shadow-xs shrink-0">
+      <input
+        type="text"
+        id="chatInput"
+        placeholder="Ask about Google, DuckDuckGo, SearXNG, crawlers, or indexing..."
+        class="flex-1 bg-transparent px-3 py-2 text-xs sm:text-sm text-[#2B221B] placeholder-[#9E9083] focus:outline-none"
+        autocomplete="off"
+      />
+      <button
+        type="submit"
+        id="sendBtn"
+        class="px-4 py-2 rounded-xl bg-[#7B5438] hover:bg-[#68452D] text-white font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+      >
+        <span>Ask</span>
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <!-- About "i" Modal -->
+  <div id="aboutModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2D241E]/40 backdrop-blur-xs">
+    <div class="bg-[#FAF7F2] border border-[#E0D7CB] rounded-2xl w-full max-w-md shadow-xl overflow-hidden text-[#2D241E]">
+      <div class="px-5 py-4 border-b border-[#E8E1D5] flex items-center justify-between bg-[#F4EFEA]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-[#342A21] text-[#FAF7F2] flex items-center justify-center font-serif italic font-bold text-xs">i</div>
+          <div>
+            <h2 class="font-semibold text-sm text-[#2B221B]">About Index</h2>
+            <p class="text-[11px] text-[#7A6B5F]">Offline Search Engine Architecture Assistant</p>
+          </div>
+        </div>
+        <button id="closeAboutBtn" class="p-1 rounded-lg text-[#7A6B5F] hover:text-[#2B221B] hover:bg-[#EAE2D8]">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="p-5 space-y-4 text-xs text-[#4C3F35] leading-relaxed">
+        <p><strong>Index</strong> is a 100% client-side, offline knowledge assistant for search engine architectures, privacy mechanisms, and web crawling systems without hallucinations.</p>
+        <div class="space-y-2 pt-1 text-[11px]">
+          <div class="p-2 rounded-lg bg-[#F2EDE5] border border-[#E4DCCE]"><strong>Traditional:</strong> Monolithic crawling (Googlebot), headless rendering, and inverted index pipelines.</div>
+          <div class="p-2 rounded-lg bg-[#F2EDE5] border border-[#E4DCCE]"><strong>Privacy Engines:</strong> DuckDuckGo Bing syndication vs Brave Search independent indexing.</div>
+          <div class="p-2 rounded-lg bg-[#F2EDE5] border border-[#E4DCCE]"><strong>Metasearch (SearXNG):</strong> Real-time multi-engine query federation, zero logs, and privacy proxies.</div>
+          <div class="p-2 rounded-lg bg-[#F2EDE5] border border-[#E4DCCE]"><strong>Crawlers & P2P:</strong> Spider lifecycles, robots.txt, crawl budget, and decentralized P2P search (YaCy).</div>
+        </div>
+        <div class="p-2.5 rounded-lg bg-[#ECE6DC] text-[11px] text-[#635548] border border-[#DDD3C5]">
+          <strong>NLP Pipeline:</strong> Runs entirely on client-side Porter Stemming, TF-IDF weighting, BM25, and Cosine similarity scoring (zero external API calls).
+        </div>
+      </div>
+      <div class="px-5 py-3 border-t border-[#E8E1D5] bg-[#F4EFEA] text-right">
+        <button id="gotItBtn" class="px-3.5 py-1.5 rounded-xl bg-[#342A21] hover:bg-[#45382D] text-[#FAF7F2] text-xs font-medium">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Browse Drawer Modal -->
+  <div id="browseModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2D241E]/40 backdrop-blur-xs">
+    <div class="bg-[#FAF7F2] border border-[#E0D7CB] rounded-2xl w-full max-w-xl max-h-[80vh] flex flex-col shadow-xl overflow-hidden text-[#2D241E]">
+      <div class="px-5 py-3.5 border-b border-[#E8E1D5] flex items-center justify-between bg-[#F4EFEA]">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-[#7B5438]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+          <h2 class="font-semibold text-[#2B221B] text-sm">Indexed Search Questions (16)</h2>
+        </div>
+        <button id="closeBrowseBtn" class="p-1 rounded-lg text-[#7A6B5F] hover:text-[#2B221B] hover:bg-[#EAE2D8]">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="p-3 border-b border-[#E8E1D5] bg-[#F8F5EE]">
+        <input type="text" id="faqSearchInput" placeholder="Filter questions..." class="w-full bg-white border border-[#DDD4C7] rounded-xl px-3 py-1.5 text-xs text-[#2B221B] focus:outline-none focus:border-[#7B5438]" />
+      </div>
+      <div id="browseList" class="p-3 overflow-y-auto space-y-2 flex-1"></div>
+      <div class="px-4 py-2.5 border-t border-[#E8E1D5] text-right bg-[#F4EFEA]">
+        <button id="closeBrowseFooterBtn" class="px-3 py-1 rounded-lg bg-[#EDE6DD] text-[#4A3D33] text-xs font-medium">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STANDALONE SCRIPT -->
+  <script>
+    // --- FAQ DATABASE ---
+    const FAQ_DATABASE = [
+      {
+        id: 'what-does-search-engine-do',
+        category: 'traditional',
+        primaryEntity: 'google',
+        question: 'What is a search engine and what does Google actually do?',
+        shortAnswer: 'A search engine discovers web pages using automated crawlers (bots), organizes that content into a searchable catalog called an inverted index, and algorithms score and rank the best results in fractions of a second when you search.',
+        fullAnswer: 'Every major search engine (including Google) operates across three interconnected systems:\n\n1. Crawling: Automated bots (like Googlebot) systematically browse the web by following links from page to page, downloading text and media.\n2. Indexing: It parses that content, breaks text into searchable terms, and stores them in a massive inverted index (a database mapping every word to the exact pages containing it).\n3. Ranking & Serving: When you type a query, ranking algorithms evaluate thousands of signals (PageRank, keyword relevance, page speed, freshness, and user intent) to order and return the most helpful results in milliseconds.',
+        keywords: ['search engine', 'what does a search engine do', 'what does google do', 'google search engine', 'how google works', 'what search engine does', 'google', 'googlebot'],
+        sourceEngine: ['Google', 'Bing']
+      },
+      {
+        id: 'google-crawler-indexing',
+        category: 'traditional',
+        primaryEntity: 'google',
+        question: 'How do traditional search engines like Google discover and index web pages?',
+        shortAnswer: 'Traditional search engines use automated web crawlers (like Googlebot) that continuously fetch web pages, execute JavaScript, parse links, and build massive centralized inverted indexes.',
+        fullAnswer: 'Google operates an end-to-end proprietary search infrastructure composed of three core phases:\n\n1. Crawling (Googlebot): Discovers new and updated pages via links, sitemaps, and RSS feeds. It adheres to politeness rules in robots.txt and manages crawl budgets.\n2. Rendering & Indexing: Headless Chromium renders dynamic JavaScript content. The text is analyzed, tokenized, and stored in a colossal inverted index.\n3. Ranking & Serving: When a user searches, algorithms evaluate query intent, PageRank, semantic relevance, content freshness, and user location to retrieve and order results in milliseconds.',
+        keywords: ['google', 'googlebot', 'crawl', 'indexing', 'traditional', 'inverted index', 'pagerank', 'ranking', 'spider', 'google search'],
+        sourceEngine: ['Google', 'Bing']
+      },
+      {
+        id: 'pagerank-ranking-algorithm',
+        category: 'traditional',
+        primaryEntity: 'google',
+        question: 'What is PageRank and how does it measure page authority?',
+        shortAnswer: 'PageRank is an algorithmic link-analysis method that calculates the importance of a web page based on the quantity and quality of backlinks pointing to it.',
+        fullAnswer: 'Developed by Larry Page and Sergey Brin at Stanford, PageRank models a "random web surfer". A link from page A to page B is treated as a vote of confidence.\n\nKey mathematical mechanics:\n- A page with higher incoming links passes more PageRank "juice" downstream.\n- Links from authoritative domains carry vastly more weight.\n- A damping factor (typically ~0.85) accounts for the probability that a surfer stops clicking and jumps to a new random URL.',
+        keywords: ['pagerank', 'ranking', 'backlinks', 'link analysis', 'authority', 'google', 'algorithm', 'larry page'],
+        sourceEngine: ['Google']
+      },
+      {
+        id: 'inverted-index-explained',
+        category: 'traditional',
+        primaryEntity: 'google',
+        question: 'What is an inverted index and why is it essential for search engines?',
+        shortAnswer: 'An inverted index is a database data structure that maps distinct words/terms directly to the lists of document IDs and positions where they occur, enabling sub-second search across billions of documents.',
+        fullAnswer: 'In a standard database, you look up a document ID to find its content (Forward Index). But searching for words requires scanning every document—an impossible task at web scale.\n\nAn Inverted Index reverses this:\n- Vocabulary / Dictionary: Every unique stemmed word encountered across the web (e.g. crawler, searxng, privacy).\n- Postings List: For each word, an array of [DocID, TermFrequency, [WordPositions]].\n\nWhen a user enters a query, the search engine intersects postings lists, calculates TF-IDF/BM25 scores, and immediately returns the best matching documents in under 50 milliseconds.',
+        keywords: ['inverted index', 'postings list', 'index', 'indexing', 'database', 'search architecture', 'bm25', 'tf-idf'],
+        sourceEngine: ['Google', 'Bing', 'Elasticsearch']
+      },
+      {
+        id: 'duckduckgo-architecture',
+        category: 'privacy',
+        primaryEntity: 'duckduckgo',
+        question: 'What is DuckDuckGo (DDG) and how does it work?',
+        shortAnswer: 'DuckDuckGo does NOT crawl the entire web itself; it relies primarily on syndication partnerships (especially Microsoft Bing) combined with its own crawler (DuckDuckBot) and 400+ instant answer sources.',
+        fullAnswer: 'DuckDuckGo (DDG) balances privacy with broad search utility using a hybrid architecture:\n\n1. Result Syndication: The majority of general web search links come via an API partnership with Microsoft Bing.\n2. DuckDuckBot Crawler: DDG operates its own lightweight crawler (DuckDuckBot), mainly used to generate zero-click Instant Answers, Wikipedia abstracts, and maintenance feeds.\n3. Privacy Shield: DDG acts as an anonymizing proxy. It strips IP addresses, refuses to store search queries linked to user profiles, disables user tracking cookies, and enforces encrypted HTTPS searches.\n4. Monetization: Non-personalized contextual advertising based purely on the currently searched keyword, without behavioral profiling.',
+        keywords: ['duckduckgo', 'ddg', 'duckduck go', 'what is duckduckgo', 'what is ddg', 'privacy', 'duckduckbot', 'bing syndication', 'tracking', 'cookies', 'ip address'],
+        sourceEngine: ['DuckDuckGo']
+      },
+      {
+        id: 'brave-search-index',
+        category: 'privacy',
+        primaryEntity: 'brave',
+        question: 'How is Brave Search different from DuckDuckGo regarding its web index?',
+        shortAnswer: 'Unlike DuckDuckGo which relies on Bing, Brave Search has built its own 100% independent, proprietary web index from scratch, eliminating Big Tech syndication.',
+        fullAnswer: 'Brave Search launched with the mission of breaking the Google-Bing duopoly in web indexing:\n\n1. Independent Index: Brave operates its own crawlers and indexer. 100% of Brave Search queries are served directly from its own standalone index without relying on Google or Bing fallbacks.\n2. Web Discovery Project (WDP): An opt-in, privacy-preserving telemetry feature where Brave browser users contribute anonymized browsing metrics to help the Brave crawler discover and index new web pages.\n3. Privacy Guarantees: No tracking IDs, no user profiling, and local client-side query handling whenever possible.',
+        keywords: ['brave', 'brave search', 'independent index', 'privacy', 'wdp', 'crawler', 'bing fallback'],
+        sourceEngine: ['Brave Search']
+      },
+      {
+        id: 'what-is-searxng',
+        category: 'metasearch',
+        primaryEntity: 'searxng',
+        question: 'What is SearXNG and how does a metasearch engine function?',
+        shortAnswer: 'SearXNG is a free, open-source, privacy-respecting metasearch engine that aggregates and normalizes search results from over 70 external search engines without logging users.',
+        fullAnswer: 'SearXNG is a modern, actively maintained fork of the original Searx project written in Python:\n\n1. No Proprietary Index: SearXNG does not maintain a web crawler or store an inverted index. Instead, it is an orchestration and metasearch layer.\n2. Parallel Fetching: When you type a query, your SearXNG instance sends simultaneous outbound requests to multiple configured engines (Google, Bing, Brave, DuckDuckGo, Wikipedia, Reddit, GitHub, Qwant, etc.).\n3. HTML Scraping & API Parsing: It parses incoming results, strips all ad trackers, tracking redirects, and cookies.\n4. Deduplication & Ranking: It unifies the results, removes duplicates, applies customizable sorting, and renders a clean, neutral, ad-free SERP.\n5. Self-Hosting: Anyone can deploy a private SearXNG instance using Docker on a home server or VPS.',
+        keywords: ['searxng', 'searx', 'metasearch', 'what is searxng', 'what is searx', 'aggregator', 'privacy', 'open source', 'docker', 'self hosted'],
+        sourceEngine: ['SearXNG']
+      },
+      {
+        id: 'searxng-instances-explained',
+        category: 'metasearch',
+        primaryEntity: 'searxng',
+        question: 'What are SearXNG public instances vs private self-hosted instances?',
+        shortAnswer: 'A public instance is a community-run server anyone can use online, whereas a private instance runs on your own hardware or VPS, ensuring 100% control over logs and rate limits.',
+        fullAnswer: 'SearXNG can be accessed in two primary ways:\n\n- Public Instances: Maintained by privacy enthusiasts and organizations worldwide (listed on searx.space). They are free to use without installation, but public instances frequently face CAPTCHAs or rate-limiting bans from Google and Cloudflare because thousands of searches share a single IP address.\n- Private / Self-Hosted Instances: Running SearXNG yourself via Docker or Docker Compose on a local Raspberry Pi or private VPS. You configure your own upstream engines, enable/disable Tor routing, bypass public rate-limits, and guarantee that no third party logs your IP or queries.',
+        keywords: ['searxng', 'public instance', 'private instance', 'self host', 'docker', 'rate limiting', 'searx.space', 'vps'],
+        sourceEngine: ['SearXNG']
+      },
+      {
+        id: 'searxng-anti-tracking',
+        category: 'metasearch',
+        primaryEntity: 'searxng',
+        question: 'How does SearXNG prevent search engines and websites from tracking you?',
+        shortAnswer: 'SearXNG acts as an anonymizing proxy: upstream search engines see only the SearXNG server’s IP, all tracking URLs are sanitized, and results can be viewed via an anonymous proxy.',
+        fullAnswer: 'SearXNG employs multiple defense-in-depth privacy mechanisms:\n\n1. IP Anonymization: Google or Bing only ever see the IP address and User-Agent of the SearXNG server, never your personal device IP.\n2. No Persistent Session or Cookies: SearXNG does not set tracking cookies or create query history accounts.\n3. Tracking Parameter Stripping: Outbound links are scrubbed of Google utm_ tags, fbclid, and redirect trackers.\n4. Built-in Web Proxy Mode: For high-security browsing, SearXNG features an optional "Cached / Proxied" button that routes website visits through the SearXNG server or Tor.',
+        keywords: ['searxng', 'anti tracking', 'privacy', 'anonymity', 'proxy', 'utm tracking', 'tor'],
+        sourceEngine: ['SearXNG']
+      },
+      {
+        id: 'what-is-a-web-crawler',
+        category: 'crawlers',
+        primaryEntity: 'crawler',
+        question: 'What is a web crawler (spider/bot) and what is its step-by-step lifecycle?',
+        shortAnswer: 'A web crawler is an automated software agent that systematically browses the World Wide Web to fetch, parse, and discover web pages for indexing or data analysis.',
+        fullAnswer: 'The core lifecycle of a production web crawler comprises 5 discrete stages:\n\n1. Frontier Queue: Maintains a prioritized list of seed URLs to visit.\n2. Robots.txt & Politeness Check: Downloads robots.txt to verify permissions and applies polite delay throttles (e.g. 1-5 seconds between requests) to prevent server overload.\n3. DNS & HTTP Fetch: Resolves domain IP and performs an asynchronous HTTP GET request.\n4. HTML Parsing & Link Extraction: Extracts hyperlinks (<a href="...">), canonical URLs, and metadata. New links are normalized and pushed to the Frontier.\n5. Deduplication & Index Pipeline: Generates content hashes (SimHash/MinHash) to avoid duplicate content, then passes the text to the inverted index pipeline.',
+        keywords: ['crawler', 'cralwer', 'spider', 'bot', 'web crawler', 'frontier', 'politeness', 'html parsing', 'deduplication'],
+        sourceEngine: ['Google', 'Bing', 'Brave']
+      },
+      {
+        id: 'yacy-p2p-engine',
+        category: 'crawlers',
+        primaryEntity: 'yacy',
+        question: 'What is YaCy and how does a decentralized peer-to-peer (P2P) search engine work?',
+        shortAnswer: 'YaCy is a decentralized, open-source search engine where every user runs a local peer node that crawls the web and shares distributed inverted index fragments across a P2P network.',
+        fullAnswer: 'Unlike Google (centralized server farms) or SearXNG (metasearch proxy), YaCy creates a distributed search cloud:\n\n1. Distributed Hash Table (DHT): The web index is split into mathematical shards using a Distributed Hash Table. No single computer owns the index.\n2. P2P Crawling: Your YaCy peer crawls pages you visit or targets you specify. Index entries are transmitted to peer nodes responsible for that specific hash range.\n3. Censorship-Resistant & Private: There is no central server, no master database, and no company controlling the ranking algorithm or advertising slots.\n4. Intranet & Darknet Support: YaCy can be used to index private company intranets or .onion Tor hidden services without exposing data to the public internet.',
+        keywords: ['yacy', 'yaci', 'p2p', 'peer to peer', 'decentralized', 'distributed hash table', 'dht', 'censorship resistant'],
+        sourceEngine: ['YaCy']
+      },
+      {
+        id: 'robots-txt-and-sitemaps',
+        category: 'crawlers',
+        primaryEntity: 'crawler',
+        question: 'How do robots.txt, sitemaps, and crawl budgets control search spiders?',
+        shortAnswer: 'Robots.txt establishes permissions for bot access, sitemaps provide structured lists of URLs, and crawl budget governs how frequently an engine fetches a site without slowing it down.',
+        fullAnswer: 'Three critical mechanisms govern web spider behavior:\n\n1. Robots.txt (Robots Exclusion Protocol): A plaintext file at /robots.txt (e.g., User-agent: * Disallow: /admin/). Well-behaved bots obey this standard, though rogue scrapers may ignore it.\n2. XML Sitemaps (sitemap.xml): Machine-readable XML feeds stating canonical URLs, modification dates, and change frequencies, allowing crawlers to discover deep pages without crawling every link.\n3. Crawl Budget: The finite number of URLs a search engine (like Googlebot) will crawl on a site during a given window. It is determined by site server speed and site popularity.',
+        keywords: ['robots.txt', 'robots txt', 'sitemap', 'crawl budget', 'crawlers', 'spider politeness', 'googlebot'],
+        sourceEngine: ['Google', 'Bing']
+      },
+      {
+        id: 'google-vs-searxng',
+        category: 'comparative',
+        question: 'What is the main difference between Google and SearXNG?',
+        shortAnswer: 'Google is a centralized search engine that maintains its own web index and tracks user queries for ad targeting. SearXNG is an open-source metasearch engine that stores no index, queries multiple engines simultaneously, and protects user privacy.',
+        fullAnswer: 'Fundamental Differences:\n\n- Index Architecture: Google crawls, parses, and indexes petabytes of data on centralized proprietary server farms. SearXNG has zero crawler and zero index; it forwards queries to 70+ existing engines on the fly.\n- Privacy & Tracking: Google tracks IP addresses, location, and searches for targeted behavioral ads. SearXNG is strictly zero-log, ad-free, and strips tracking parameters.\n- Control: Google’s ranking algorithms are proprietary closed black-boxes. SearXNG is 100% free open-source software (GPL-3.0) that can be run privately via Docker.',
+        keywords: ['google vs searxng', 'difference google searxng', 'compare google searxng', 'privacy vs google'],
+        sourceEngine: ['Google', 'SearXNG']
+      },
+      {
+        id: 'duckduckgo-vs-searxng',
+        category: 'comparative',
+        question: 'How does DuckDuckGo compare to SearXNG?',
+        shortAnswer: 'DuckDuckGo is a hosted commercial privacy engine primarily syndicating Bing results with contextual ads. SearXNG is self-hostable open-source software that aggregates 70+ engines with zero ads and total code transparency.',
+        fullAnswer: 'While both champion user privacy, their design philosophies differ significantly:\n\n1. Result Sources: DuckDuckGo gets ~90% of its regular web links from Microsoft Bing. SearXNG queries Bing, Google, Brave, Wikipedia, Reddit, and dozens of others simultaneously.\n2. Infrastructure: DuckDuckGo is a hosted service operating on commercial servers. SearXNG is decentralized software you can run on your own server or use across independent community instances.\n3. Code Transparency: SearXNG is completely open-source (GPL-3.0). DuckDuckGo’s backend server code and syndication pipelines are proprietary closed-source.\n4. Monetization: DuckDuckGo displays contextual ads via Microsoft Advertising; SearXNG contains zero advertisements.',
+        keywords: ['duckduckgo vs searxng', 'ddg vs searxng', 'compare duckduckgo searxng', 'privacy search engines'],
+        sourceEngine: ['DuckDuckGo', 'SearXNG']
+      },
+      {
+        id: 'google-vs-duckduckgo',
+        category: 'comparative',
+        question: 'What is the difference between Google and DuckDuckGo?',
+        shortAnswer: 'Google provides highly personalized search results by collecting personal data and query history for targeted ads. DuckDuckGo provides neutral, non-personalized search results without storing IP addresses or tracking cookies.',
+        fullAnswer: 'The core battle is personalization vs. privacy:\n\n1. Filter Bubbles & Personalization: Google personalizes search ranking based on your past search history, location, device, and Google Account. DuckDuckGo returns identical results to anyone typing the same term in the same region.\n2. Data Retention: Google stores search histories and associates them with ad profiles. DuckDuckGo saves zero search logs and does not store user IP addresses.\n3. Index Source: Google crawls and indexes its own billions of web pages. DuckDuckGo relies primarily on Bing’s index API combined with instant answer modules.\n4. Monetization: Google serves hyper-targeted behavioral ads; DuckDuckGo serves non-tracking contextual ads matched only to the immediate query word.',
+        keywords: ['google vs duckduckgo', 'google vs ddg', 'difference google duckduckgo', 'privacy google ddg'],
+        sourceEngine: ['Google', 'DuckDuckGo']
+      },
+      {
+        id: 'crawler-vs-metasearch',
+        category: 'comparative',
+        question: 'What is the technical difference between a Web Crawler, an Indexer, and a Metasearch Engine?',
+        shortAnswer: 'A crawler fetches web pages; an indexer analyzes and stores them in a searchable inverted index; a metasearch engine bypasses both by querying other search engines in real-time and merging their results.',
+        fullAnswer: 'These three components represent distinct architectural roles in information retrieval:\n\n1. Web Crawler (Spider): Software (e.g., Googlebot, Scrapy, YaCy) that traverses the internet following links, downloading raw HTML, and populating a raw document repository.\n2. Search Indexer: Engine component (e.g., Lucene, Elasticsearch) that parses crawled documents, extracts tokens, removes stopwords, computes term frequencies, and constructs an inverted index.\n3. Metasearch Engine (Aggregator): Software (e.g., SearXNG) that has NO crawler and NO index. Instead, it acts as a meta-query proxy, dispatching the user’s query across external search engines (like Google, Bing, Brave), combining the results into a unified list, and presenting them cleanly.',
+        keywords: ['crawler vs metasearch', 'crawler vs indexer', 'metasearch difference', 'search engine components', 'spider vs aggregator'],
+        sourceEngine: ['Google', 'SearXNG', 'YaCy']
+      }
+    ];
+
+    // --- NLP STOPWORDS & SYNONYMS ---
+    const STOPWORDS = new Set([
+      'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', 'aren',
+      'as', 'at', 'be', 'because', 'been', 'before', 'being', 'below', 'between', 'both', 'but', 'by',
+      'can', 'cannot', 'could', 'couldn', 'did', 'didn', 'do', 'does', 'doesn', 'doing', 'don', 'down',
+      'during', 'each', 'few', 'for', 'from', 'further', 'had', 'hadn', 'has', 'hasn', 'have', 'haven',
+      'having', 'he', 'her', 'here', 'hers', 'herself', 'him', 'himself', 'his', 'how', 'i', 'if', 'in',
+      'into', 'is', 'isn', 'it', 'its', 'itself', 'let', 'me', 'more', 'most', 'mustn', 'my', 'myself',
+      'no', 'nor', 'not', 'of', 'off', 'on', 'once', 'only', 'or', 'other', 'ought', 'our', 'ours',
+      'ourselves', 'out', 'over', 'own', 'same', 'shan', 'she', 'should', 'shouldn', 'so', 'some', 'such',
+      'than', 'that', 'the', 'their', 'theirs', 'them', 'themselves', 'then', 'there', 'these', 'they',
+      'this', 'those', 'through', 'to', 'too', 'under', 'until', 'up', 'very', 'was', 'wasn', 'we',
+      'were', 'weren', 'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'with', 'would',
+      'wouldn', 'you', 'your', 'yours', 'yourself', 'yourselves', 'tell', 'show', 'explain', 'give', 'know',
+      'sure', 'please', 'pls', 'ok', 'okay', 'yes', 'yeah', 'yea', 'yep', 'yup', 'yo', 'huh', 'bro', 'dude',
+      'want', 'like', 'really', 'basically', 'wondering', 'mean', 'means', 'thing', 'stuff', 'info',
+      'information', 'tellme', 'thanks', 'thx'
+    ]);
+
+    const ALL_ENTITIES = ['google', 'searxng', 'duckduckgo', 'brave', 'yacy', 'bing', 'crawler', 'pagerank'];
+
+    // --- PORTER STEMMER (Simplified standard) ---
+    function porterStem(w) {
+      if (w.length <= 2) return w;
+      let word = w.toLowerCase();
+      if (word.endsWith('sses')) word = word.slice(0, -2);
+      else if (word.endsWith('ies')) word = word.slice(0, -2);
+      else if (word.endsWith('ss')) {}
+      else if (word.endsWith('s')) word = word.slice(0, -1);
+
+      if (word.endsWith('eed')) { if (word.length > 4) word = word.slice(0, -1); }
+      else if (word.endsWith('ed')) { if (word.length > 4) word = word.slice(0, -2); }
+      else if (word.endsWith('ing')) { if (word.length > 5) word = word.slice(0, -3); }
+      return word;
+    }
+
+    // --- QUERY NORMALIZER WITH TYPO RESILIENCE ---
+    function normalizeQuery(query) {
+      let text = query.toLowerCase().trim();
+      text = text.replace(/[?!.,:;"'\]\[()\/\\#$@*~^]/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Canonicalize SearXNG
+      text = text.replace(/\bsear\s*x\s*ng\b/gi, 'searxng');
+      text = text.replace(/\bsear\s*x\b/gi, 'searxng');
+      text = text.replace(/\bsearx\s*ng\b/gi, 'searxng');
+      text = text.replace(/\bsearxng\b/gi, 'searxng');
+
+      // Canonicalize DuckDuckGo
+      text = text.replace(/\bduck\s*duck\s*(?:and\s*)?go\b/gi, 'duckduckgo');
+      text = text.replace(/\bduckduck\s*go\b/gi, 'duckduckgo');
+      text = text.replace(/\bduck\s*duck\b/gi, 'duckduckgo');
+      text = text.replace(/\bduckduck\b/gi, 'duckduckgo');
+      text = text.replace(/\bddg\b/gi, 'duckduckgo');
+
+      // Canonicalize Google typos
+      text = text.replace(/\bgoogl[e|o]?e?\b/gi, 'google');
+      text = text.replace(/\bgoogel\b/gi, 'google');
+      text = text.replace(/\bgogle\b/gi, 'google');
+
+      // Canonicalize Crawler typos
+      text = text.replace(/\bcralwer\b/gi, 'crawler');
+      text = text.replace(/\bweb\s+crawler[s]?\b/gi, 'crawler');
+      text = text.replace(/\bweb\s+spider[s]?\b/gi, 'crawler');
+      text = text.replace(/\bspider[s]?\b/gi, 'crawler');
+
+      // Canonicalize YaCy, PageRank, Robots.txt
+      text = text.replace(/\byaci\b/gi, 'yacy');
+      text = text.replace(/\bpage\s*rank\b/gi, 'pagerank');
+      text = text.replace(/\binverted\s*index(?:ing)?\b/gi, 'inverted index');
+      text = text.replace(/\brobot[s]?\s*[\.\s-]?\s*txt\b/gi, 'robots.txt');
+
+      return text.replace(/\s+/g, ' ').trim();
+    }
+
+    function getQueryTokens(query) {
+      const normalized = normalizeQuery(query);
+      const raw = normalized.match(/[a-z0-9]+/g) || [];
+      const filtered = raw.filter(w => !STOPWORDS.has(w) && w.length > 1);
+      return filtered.map(w => porterStem(w));
+    }
+
+    function getFaqTokens(faq) {
+      const text = `${faq.question} ${faq.question} ${faq.keywords.join(' ')} ${faq.shortAnswer}`;
+      const normalized = normalizeQuery(text);
+      const raw = normalized.match(/[a-z0-9]+/g) || [];
+      const filtered = raw.filter(w => !STOPWORDS.has(w) && w.length > 1);
+      return filtered.map(w => porterStem(w));
+    }
+
+    // --- SEARCH MATCHING ENGINE ---
+    class SearchEngine {
+      constructor(faqs) {
+        this.faqs = faqs;
+        this.docTokens = new Map();
+        this.docVectors = new Map();
+        this.docFrequencies = new Map();
+        this.totalDocs = faqs.length;
+
+        // Build index
+        for (const faq of faqs) {
+          const tokens = getFaqTokens(faq);
+          this.docTokens.set(faq.id, tokens);
+          const unique = new Set(tokens);
+          for (const t of unique) {
+            this.docFrequencies.set(t, (this.docFrequencies.get(t) || 0) + 1);
+          }
+        }
+
+        for (const faq of faqs) {
+          const tokens = this.docTokens.get(faq.id) || [];
+          this.docVectors.set(faq.id, this.computeTfidf(tokens));
+        }
+      }
+
+      computeTfidf(tokens) {
+        const tf = new Map();
+        for (const t of tokens) tf.set(t, (tf.get(t) || 0) + 1);
+        const vec = new Map();
+        for (const [t, count] of tf) {
+          const df = this.docFrequencies.get(t) || 0;
+          const idf = Math.log((this.totalDocs + 1) / (df + 1)) + 1;
+          const weight = (1 + Math.log(count)) * idf;
+          vec.set(t, weight);
+        }
+        return vec;
+      }
+
+      cosine(vA, vB) {
+        let dot = 0;
+        let nA = 0;
+        let nB = 0;
+        for (const [t, wA] of vA) {
+          nA += wA * wA;
+          const wB = vB.get(t) || 0;
+          dot += wA * wB;
+        }
+        for (const [, wB] of vB) nB += wB * wB;
+        if (nA === 0 || nB === 0) return 0;
+        return dot / (Math.sqrt(nA) * Math.sqrt(nB));
+      }
+
+      search(query, threshold = 0.20) {
+        const normQuery = normalizeQuery(query);
+        const queryLower = query.toLowerCase();
+        const queryTokens = getQueryTokens(query);
+        const queryVector = this.computeTfidf(queryTokens);
+        const normQueryTokens = new Set(normQuery.match(/[a-z0-9]+/g) || []);
+
+        const entitiesInQuery = ALL_ENTITIES.filter(
+          e => normQueryTokens.has(e) || queryLower.includes(e)
+        );
+        const isExplicitComparison = 
+          /(compare|versus|\bvs\b|difference|differ|between|\bor\b)\b/i.test(query) || 
+          entitiesInQuery.length >= 2;
+
+        const results = [];
+
+        for (const faq of this.faqs) {
+          const docTokens = this.docTokens.get(faq.id) || [];
+          const docVector = this.docVectors.get(faq.id) || new Map();
+          const docTokenSet = new Set(docTokens);
+
+          const cos = this.cosine(queryVector, docVector);
+          let finalScore = cos;
+
+          // Keyword phrase match
+          let kwBoost = 0;
+          for (const kw of faq.keywords) {
+            const kwNorm = normalizeQuery(kw);
+            if (normQuery.includes(kwNorm) || queryLower.includes(kw.toLowerCase())) {
+              kwBoost = Math.max(kwBoost, kwNorm.includes(' ') ? 0.35 : 0.25);
+            }
+          }
+
+          // Term coverage
+          const uniqueQuery = Array.from(new Set(queryTokens));
+          const matchedCount = uniqueQuery.filter(t => docTokenSet.has(t)).length;
+          const coverage = uniqueQuery.length > 0 ? matchedCount / uniqueQuery.length : 0;
+
+          if (coverage === 1.0 && uniqueQuery.length > 0) {
+            finalScore = Math.max(finalScore + kwBoost, 0.72 + (0.20 * cos));
+          } else if (coverage >= 0.5) {
+            finalScore = Math.max(finalScore + kwBoost, 0.45 + (0.35 * coverage));
+          } else {
+            finalScore = Math.min(finalScore + kwBoost, 1.0);
+          }
+
+          // Intent Routing
+          if (faq.category === 'comparative') {
+            if (!isExplicitComparison) {
+              finalScore = Math.max(0, finalScore - 0.45);
+            } else {
+              finalScore = Math.min(1.0, finalScore + 0.25);
+            }
+          } else {
+            if (faq.primaryEntity && entitiesInQuery.includes(faq.primaryEntity) && !isExplicitComparison) {
+              finalScore = Math.min(1.0, finalScore + 0.38);
+            }
+          }
+
+          const matchedTerms = queryTokens.filter(t => docTokenSet.has(t));
+
+          results.push({
+            faq,
+            score: Number(finalScore.toFixed(3)),
+            matchedTerms: Array.from(new Set(matchedTerms))
+          });
+        }
+
+        results.sort((a, b) => b.score - a.score);
+        const best = (results.length > 0 && results[0].score >= threshold) ? results[0] : null;
+        return { bestMatch: best, allMatches: results };
+      }
+    }
+
+    // --- APPLICATION CONTROLLER ---
+    const engine = new SearchEngine(FAQ_DATABASE);
+
+    const POPULAR_QUESTIONS = [
+      'What is SearXNG and how does it work?',
+      'What is the difference between Google and SearXNG?',
+      'Does DuckDuckGo crawl the entire web itself?',
+      'What is an inverted index?',
+      'What does a search engine do?',
+      'What is a web crawler / spider?'
+    ];
+
+    let messages = [
+      {
+        id: 'welcome',
+        sender: 'bot',
+        text: "Hi! I'm Index. Ask me anything about traditional search engines (Google), privacy engines (DuckDuckGo), metasearch engines like SearXNG, or web crawlers.",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        suggestedQuestions: [
+          'What does a search engine do?',
+          'What is SearXNG and how does it work?',
+          'What is DuckDuckGo (DDG)?'
+        ]
+      }
+    ];
+
+    let expandedDetailsId = null;
+
+    // DOM Elements
+    const chatScroll = document.getElementById('chatScroll');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const quickPills = document.getElementById('quickPills');
+    const resetBtn = document.getElementById('resetBtn');
+    const infoBtn = document.getElementById('infoBtn');
+    const aboutModal = document.getElementById('aboutModal');
+    const closeAboutBtn = document.getElementById('closeAboutBtn');
+    const gotItBtn = document.getElementById('gotItBtn');
+    const browseBtn = document.getElementById('browseBtn');
+    const browseModal = document.getElementById('browseModal');
+    const closeBrowseBtn = document.getElementById('closeBrowseBtn');
+    const closeBrowseFooterBtn = document.getElementById('closeBrowseFooterBtn');
+    const browseList = document.getElementById('browseList');
+    const faqSearchInput = document.getElementById('faqSearchInput');
+
+    function renderMessages() {
+      chatScroll.innerHTML = '';
+      messages.forEach(msg => {
+        const isUser = msg.sender === 'user';
+        const isDetailsOpen = expandedDetailsId === msg.id;
+
+        const row = document.createElement('div');
+        row.className = `flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`;
+
+        // Avatar
+        const avatar = document.createElement('div');
+        avatar.className = `w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-medium ${
+          isUser ? 'bg-[#342A21] text-[#FAF7F2]' : 'bg-[#EFE9DF] text-[#6E4B33] border border-[#DDD3C4]'
+        }`;
+        avatar.textContent = isUser ? 'You' : 'Ix';
+
+        // Message Box
+        const contentBox = document.createElement('div');
+        contentBox.className = `max-w-[85%] sm:max-w-[80%] space-y-1.5 ${isUser ? 'items-end' : 'items-start'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = `p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed ${
+          isUser
+            ? 'bg-[#342A21] text-[#FAF7F2] rounded-tr-none shadow-xs'
+            : 'bg-[#F8F5EE] border border-[#E7E1D6] text-[#2D241E] rounded-tl-none shadow-2xs'
+        }`;
+
+        let innerHTML = '';
+
+        if (!isUser && msg.similarityScore !== undefined) {
+          innerHTML += `
+            <div class="flex items-center gap-2 mb-2 pb-1.5 border-b border-[#E8E1D5]">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#EAE3D8] text-[#5C4533] border border-[#D9CEBF]">
+                ${Math.round(msg.similarityScore * 100)}% match
+              </span>
+              ${msg.matchedFaq ? `<span class="text-[10px] uppercase font-mono text-[#8C5D3B]">${msg.matchedFaq.category}</span>` : ''}
+            </div>
+          `;
+        }
+
+        innerHTML += `<div class="whitespace-pre-line leading-relaxed">${escapeHtml(msg.text)}</div>`;
+
+        if (!isUser && msg.matchedFaq) {
+          innerHTML += `
+            <div class="mt-2.5 pt-2 border-t border-[#E8E1D5]">
+              <button onclick="toggleDetails('${msg.id}')" class="text-xs text-[#7B5438] hover:text-[#5C3C24] font-medium flex items-center gap-1">
+                <span>${isDetailsOpen ? 'Hide deep dive' : 'Read deep dive'}</span>
+                <span class="text-[10px]">${isDetailsOpen ? '▲' : '▼'}</span>
+              </button>
+              ${isDetailsOpen ? `
+                <div class="mt-2 text-xs text-[#3E342B] space-y-2 bg-[#F1EBE2] p-3 rounded-xl border border-[#DDD3C5] leading-relaxed whitespace-pre-line">
+                  <div>${escapeHtml(msg.matchedFaq.fullAnswer)}</div>
+                  ${msg.matchedTokens && msg.matchedTokens.length ? `
+                    <div class="pt-2 border-t border-[#DDD3C5] text-[11px] text-[#706356]">
+                      <span class="text-[#8C7A6A] font-medium">Matched keywords: </span>${msg.matchedTokens.join(', ')}
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
+
+        bubble.innerHTML = innerHTML;
+        contentBox.appendChild(bubble);
+
+        // Suggested Chips
+        if (!isUser && msg.suggestedQuestions && msg.suggestedQuestions.length) {
+          const chipWrap = document.createElement('div');
+          chipWrap.className = 'pt-1 flex flex-wrap gap-1.5';
+          msg.suggestedQuestions.forEach(q => {
+            const btn = document.createElement('button');
+            btn.className = 'px-2.5 py-1 rounded-xl bg-[#F2ECE4] hover:bg-[#E8E0D5] text-[#4C3F35] hover:text-[#261E17] border border-[#DDD4C7] text-xs text-left transition-all';
+            btn.textContent = q;
+            btn.onclick = () => handleSend(q);
+            chipWrap.appendChild(btn);
+          });
+          contentBox.appendChild(chipWrap);
+        }
+
+        // Timestamp
+        const timeDiv = document.createElement('div');
+        timeDiv.className = `text-[10px] text-[#8C7E72] px-1 ${isUser ? 'text-right' : 'text-left'}`;
+        timeDiv.textContent = msg.timestamp;
+        contentBox.appendChild(timeDiv);
+
+        row.appendChild(avatar);
+        row.appendChild(contentBox);
+        chatScroll.appendChild(row);
+      });
+
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+    }
+
+    window.toggleDetails = function(id) {
+      expandedDetailsId = (expandedDetailsId === id) ? null : id;
+      renderMessages();
+    };
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function handleSend(text) {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // User Message
+      messages.push({
+        id: `user-${Date.now()}`,
+        sender: 'user',
+        text: trimmed,
+        timestamp: time
+      });
+
+      // Search
+      const searchRes = engine.search(trimmed, 0.20);
+      const best = searchRes.bestMatch;
+
+      let botMsg;
+      if (best) {
+        const relatedIds = best.faq.relatedQuestionIds || [];
+        const followUps = FAQ_DATABASE
+          .filter(f => relatedIds.includes(f.id) && f.id !== best.faq.id)
+          .map(f => f.question)
+          .slice(0, 3);
+
+        botMsg = {
+          id: `bot-${Date.now()}`,
+          sender: 'bot',
+          text: best.faq.shortAnswer,
+          matchedFaq: best.faq,
+          similarityScore: best.score,
+          matchedTokens: best.matchedTerms,
+          suggestedQuestions: followUps.length ? followUps : undefined,
+          timestamp: time
+        };
+      } else {
+        const top3 = searchRes.allMatches.slice(0, 3).map(m => m.faq.question);
+        botMsg = {
+          id: `bot-${Date.now()}`,
+          sender: 'bot',
+          text: "I couldn't find an exact match for that specific phrasing. Here are the most relevant search engine topics from our database:",
+          suggestedQuestions: top3,
+          timestamp: time
+        };
+      }
+
+      messages.push(botMsg);
+      renderMessages();
+      chatInput.value = '';
+    }
+
+    // Render Popular Suggestions Carousel
+    function renderPills() {
+      POPULAR_QUESTIONS.slice(0, 4).forEach(q => {
+        const btn = document.createElement('button');
+        btn.className = 'px-2.5 py-1 rounded-lg bg-[#F4EFEA] hover:bg-[#EAE2D8] text-[#55473C] hover:text-[#2B221B] border border-[#E0D7CC] text-xs whitespace-nowrap transition-colors';
+        btn.textContent = q;
+        btn.onclick = () => handleSend(q);
+        quickPills.appendChild(btn);
+      });
+    }
+
+    // Render Browse Modal
+    function renderBrowseList(filter = '') {
+      browseList.innerHTML = '';
+      const f = filter.toLowerCase().trim();
+      const filtered = FAQ_DATABASE.filter(item => 
+        !f || item.question.toLowerCase().includes(f) || item.keywords.some(k => k.toLowerCase().includes(f))
+      );
+
+      filtered.forEach(faq => {
+        const item = document.createElement('div');
+        item.className = 'p-3 rounded-xl bg-white border border-[#E7E1D6] hover:border-[#7B5438]/60 hover:bg-[#F8F4EE] cursor-pointer transition-all space-y-1';
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-[#EDE6DD] text-[#7B5438]">${faq.category}</span>
+            <span class="text-[10px] text-[#7B5438] font-medium hover:underline">Ask this →</span>
+          </div>
+          <h3 class="text-xs font-semibold text-[#2B221B]">${escapeHtml(faq.question)}</h3>
+          <p class="text-[11px] text-[#706356] truncate">${escapeHtml(faq.shortAnswer)}</p>
+        `;
+        item.onclick = () => {
+          handleSend(faq.question);
+          browseModal.classList.add('hidden');
+        };
+        browseList.appendChild(item);
+      });
+    }
+
+    // Event Listeners
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleSend(chatInput.value);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      messages = [
+        {
+          id: `welcome-${Date.now()}`,
+          sender: 'bot',
+          text: "Conversation reset. Feel free to ask any question about search engines, SearXNG, or crawlers.",
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          suggestedQuestions: [
+            'What does a search engine do?',
+            'What is SearXNG and how does it work?',
+            'What is an inverted index?'
+          ]
+        }
+      ];
+      renderMessages();
+    });
+
+    infoBtn.onclick = () => aboutModal.classList.remove('hidden');
+    closeAboutBtn.onclick = () => aboutModal.classList.add('hidden');
+    gotItBtn.onclick = () => aboutModal.classList.add('hidden');
+
+    browseBtn.onclick = () => {
+      renderBrowseList(faqSearchInput.value);
+      browseModal.classList.remove('hidden');
+    };
+    closeBrowseBtn.onclick = () => browseModal.classList.add('hidden');
+    closeBrowseFooterBtn.onclick = () => browseModal.classList.add('hidden');
+
+    faqSearchInput.addEventListener('input', (e) => {
+      renderBrowseList(e.target.value);
+    });
+
+    // Close on background click
+    aboutModal.addEventListener('click', (e) => {
+      if (e.target === aboutModal) aboutModal.classList.add('hidden');
+    });
+    browseModal.addEventListener('click', (e) => {
+      if (e.target === browseModal) browseModal.classList.add('hidden');
+    });
+
+    // Init
+    renderPills();
+    renderMessages();
+  </script>
+</body>
+</html>
